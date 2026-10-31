@@ -1,0 +1,3 @@
+import mongoose from "mongoose";
+const schema=new mongoose.Schema({name:{type:String,required:true},description:{type:String,required:true},price:{type:Number,min:0,required:true},category:{type:String,required:true},image:{type:String,required:true},stock:{type:Number,min:0,default:0},rating:{type:Number,min:0,max:5,default:4.5},featured:{type:Boolean,default:false}},{timestamps:true});
+export default mongoose.model("Product",schema);

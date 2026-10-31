@@ -1,0 +1,7 @@
+import express from "express";import Product from "../models/Product.js";import{protect,adminOnly}from "../middleware/auth.js";
+const r=express.Router();
+r.get("/",async(req,res)=>{try{const{search,category,sort}=req.query,q={};if(search)q.$or=[{name:{$regex:search,$options:"i"}},{description:{$regex:search,$options:"i"}}];if(category&&category!=="All")q.category=category;let x=Product.find(q);if(sort==="price-asc")x=x.sort({price:1});else if(sort==="price-desc")x=x.sort({price:-1});else x=x.sort({featured:-1,createdAt:-1});res.json(await x)}catch{res.status(500).json({message:"Could not load products"})}});
+r.get("/:id",async(req,res)=>{try{const p=await Product.findById(req.params.id);if(!p)return res.status(404).json({message:"Product not found"});res.json(p)}catch{res.status(400).json({message:"Invalid product ID"})}});
+r.post("/",protect,adminOnly,async(req,res)=>{try{res.status(201).json(await Product.create(req.body))}catch{res.status(400).json({message:"Could not create product"})}});
+r.delete("/:id",protect,adminOnly,async(req,res)=>{try{await Product.findByIdAndDelete(req.params.id);res.json({message:"Product deleted"})}catch{res.status(400).json({message:"Could not delete product"})}});
+export default r;

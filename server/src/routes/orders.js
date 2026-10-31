@@ -1,0 +1,7 @@
+import express from "express";import Order from "../models/Order.js";import Product from "../models/Product.js";import{protect,adminOnly}from "../middleware/auth.js";
+const r=express.Router();
+r.post("/",protect,async(req,res)=>{try{const{items,shippingAddress,paymentMethod="Cash on Delivery"}=req.body;if(!items?.length)return res.status(400).json({message:"Cart is empty"});const ps=await Product.find({_id:{$in:items.map(i=>i.product)}}),by=Object.fromEntries(ps.map(p=>[p._id.toString(),p]));let total=0;const oi=items.map(i=>{const p=by[i.product];if(!p||p.stock<i.quantity)throw Error("Insufficient stock for "+(p?.name||"product"));total+=p.price*i.quantity;return{product:p._id,name:p.name,image:p.image,price:p.price,quantity:i.quantity}});const o=await Order.create({user:req.user._id,items:oi,shippingAddress,paymentMethod,total});for(const i of items)await Product.findByIdAndUpdate(i.product,{$inc:{stock:-i.quantity}});res.status(201).json(o)}catch(e){res.status(400).json({message:e.message||"Could not place order"})}});
+r.get("/mine",protect,async(req,res)=>res.json(await Order.find({user:req.user._id}).sort({createdAt:-1})));
+r.get("/",protect,adminOnly,async(req,res)=>res.json(await Order.find().populate("user","name email").sort({createdAt:-1})));
+r.patch("/:id/status",protect,adminOnly,async(req,res)=>{const o=await Order.findByIdAndUpdate(req.params.id,{status:req.body.status},{new:true});if(!o)return res.status(404).json({message:"Order not found"});res.json(o)});
+export default r;

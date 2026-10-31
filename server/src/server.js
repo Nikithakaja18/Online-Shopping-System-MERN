@@ -1,0 +1,3 @@
+import"dotenv/config";import express from"express";import cors from"cors";import mongoose from"mongoose";import auth from"./routes/auth.js";import products from"./routes/products.js";import orders from"./routes/orders.js";
+const app=express();app.use(cors({origin:process.env.CLIENT_URL||"http://localhost:5173"}));app.use(express.json());app.get("/api/health",(_,res)=>res.json({status:"ok"}));app.use("/api/auth",auth);app.use("/api/products",products);app.use("/api/orders",orders);
+mongoose.connect(process.env.MONGO_URI).then(()=>app.listen(process.env.PORT||5000,()=>console.log("API running"))).catch(e=>{console.error(e);process.exit(1)});
